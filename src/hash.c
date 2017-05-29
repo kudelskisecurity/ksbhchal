@@ -5,17 +5,17 @@
 
 void hash_N_to_N(struct hash *dst, const struct hash *src)
 {
-    blake2b(dst->h, HASH_SIZE, src->h, HASH_SIZE, NULL, 0);
+    haraka256256(dst->h, src->h);
 }
 
-void hash_N_to_2N(uint8_t *dst, const struct hash *src)
+void hash_N_to_2N(struct hash *dst, const uint8_t *src)
 {
-    blake2b(dst, 2*HASH_SIZE, src->h, HASH_SIZE, NULL, 0);
+    haraka256512(dst->h, src->h);
 }
 
 void hash_2N_to_N(struct hash *dst, const uint8_t *src)
 {
-    blake2b(dst->h, HASH_SIZE, src, 2*HASH_SIZE, NULL, 0);
+    haraka512256(dst->h, src->h);
 }
 
 void hash_to_N(struct hash *dst, const uint8_t *src, uint64_t srclen)
