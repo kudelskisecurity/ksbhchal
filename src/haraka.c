@@ -148,36 +148,3 @@ void haraka256256(uint8_t *hash, const uint8_t *msg) {
     _mm_storeu_si128((__m128i*)hash, s[0]);
     _mm_storeu_si128((__m128i*)(hash + 16), s[1]);
 }
-
-#if 0
-int main() {
-    // allocate memory for input and digest
-    uint8_t *msg = (uint8_t *)calloc(64, sizeof(uint8_t));
-    uint8_t *digest = (uint8_t *)calloc(32, sizeof(uint8_t));
-    int i;
-
-    // set some input bytes
-    for (i = 0; i < 64; ++i)
-        msg[i] = i;
-
-    // print input
-    printf("= input bytes =\n");
-    printbytes(msg, 64); printf("\n");
-
-    // run Haraka-512/256
-    haraka512256(digest, msg);
-
-    // print output
-    printf("= haraka-512/256 output bytes =\n");
-    printbytes(digest, 32); printf("\n");
-
-    // run Haraka-256/256
-    haraka256256(digest, msg);
-
-    // print output
-    printf("= haraka-256/256 output bytes =\n");
-    printbytes(digest, 32); printf("\n");
-
-    return 0;
-}
-#endif

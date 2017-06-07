@@ -5,4 +5,4 @@ sign:   *.c *.h
 	$(CC) $(CFLAGS) hors.c haraka.c sign.c -o sign
 	
 clean:
-	rm haraka
+	rm -f sign

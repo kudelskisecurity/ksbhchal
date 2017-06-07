@@ -2,12 +2,15 @@
 #include <string.h>
 #include <stdlib.h>
 
-void horst_gensk(uint8_t *sk, const uint8_t *seed)
-{
-    uint8_t in[32];
-    memcpy(in, seed, 32);
+extern void haraka256256(uint8_t *hash, const uint8_t *msg);
+extern void haraka512256(uint8_t *hash, const uint8_t *msg);
 
-    for (int i=0; i < HORS_t; ++i) {
+void gensk(uint8_t *sk, const uint8_t *seed)
+{
+    uint8_t in[2*N];
+    HCPY(in, seed);
+
+    for (int i=0; i < T; ++i) {
         haraka256256(sk, in);
         in[0] += 1;
         if (!in[0]) in[1] += 1;
@@ -15,25 +18,22 @@ void horst_gensk(uint8_t *sk, const uint8_t *seed)
 }
 
 
-/* Naive HORST without merging of authentication paths */
-int horst_genpk(const uint8_t *sk, uint8_t *pk)
+int genpk(const uint8_t *sk, uint8_t *pk)
 {
-    uint8_t *buf = malloc(2*HORS_t * N);
+    uint8_t *buf = malloc(2*T*N);
     if (buf == NULL)
         return 1;
 
-    uint8_t *src = buf+HORS_t*N;
+    uint8_t *src = buf+T*N;
     uint8_t *dst = buf;
     uint8_t *tmp;
     int j, l;
 
-    /* Leaves */
-    int n = HORS_t;
+    int n = T;
     for (j = 0; j < n; ++j)
         haraka256256(dst+(j*N), sk+(j*N));
 
-    /* Merkle tree */
-    for (l = 0; l < HORS_tau; ++l)
+    for (l = 0; l < TAU; ++l)
     {
         tmp = src;
         src = dst;
@@ -43,51 +43,54 @@ int horst_genpk(const uint8_t *sk, uint8_t *pk)
             haraka512256(dst+(i*N), src+(2*i*N));
     }
 
-    memcpy(pk, dst, N);
+    HCPY(pk, dst);
 
     free(buf);
     return 0;
 }
 
-//int horst_sign(const uint8_t *sk, struct horst_sign *sig, const uint8_t *msg)
-int horst_sign(const uint8_t *sk, uint8_t *sig, const uint8_t *msg)
+int sign(const uint8_t *sk, uint8_t *sig, const uint8_t *msg)
 {
-    struct hors_subset subset;
+    int subset[K];
 
-    int res = hors_randsubset(msg, &subset);
+    uint8_t seedseed[2*N];
+    uint8_t seed[N];
+    HCPY(seedseed, sk);
+    HCPY(seedseed, msg);
+    haraka512256(seed, seedseed);
 
-    /* Values */
-    for (int i = 0; i < HORS_k; ++i)
+    getsubset(msg, seed, subset);
+
+    HCPY(sig+(K*N)+(TAU*K*N), seed);
+
+    for (int i = 0; i < K; ++i)
     {
-        int index = subset.s[i];
-        //memcpy(&sig->s.s[i], sk + (index * N), N);
-        memcpy(sig+(i*N), sk + (index * N), N);
+        int index = subset[i];
+        HCPY(sig+(i*N), sk + (index * N));
     }
 
-    uint8_t *buf = malloc(2*HORS_t * N);
+    uint8_t *buf = malloc(2*T * N);
     if (buf == NULL)
         return 1;
 
-    uint8_t *src = buf+HORS_t*N;
+    uint8_t *src = buf+T*N;
     uint8_t *dst = buf;
     uint8_t *tmp;
     int j, l;
 
-    /* Leaves */
-    int n = HORS_t;
+    int n = T;
     for (j = 0; j < n; ++j)
         haraka256256(dst+(j*N), sk+(j*N));
 
-    /* Merkle tree */
-    for (l = 0; l < HORS_tau; ++l)
+    uint8_t *paths = sig+(K*N);
+
+    for (l = 0; l < TAU; ++l)
     {
-        /* Copy auth path */
-        for (int i = 0; i < HORS_k; ++i) {
-            int index = subset.s[i];
+        for (int i = 0; i < K; ++i) {
+            int index = subset[i];
             int sibling = index + (index % 2 == 0 ? 1 : -1);
-            //memcpy(&sig->a[i].p[l], dst+sibling*N, N);
-            memcpy(sig+(HORS_k*N)+(HORS_k*N*l)+(i*N), dst+sibling*N, N);
-            subset.s[i] >>= 1;
+            HCPY(paths+(K*N*l)+(i*N), dst+sibling*N);
+            subset[i] >>= 1;
         }
 
         tmp = src;
@@ -102,33 +105,32 @@ int horst_sign(const uint8_t *sk, uint8_t *sig, const uint8_t *msg)
     return 0;
 }
 
-//int horst_verify(const uint8_t *pk, const struct horst_sign *sig, const uint8_t *msg)
-int horst_verify(const uint8_t *pk, const uint8_t *sig, const uint8_t *msg)
+int verify(const uint8_t *pk, const uint8_t *sig, const uint8_t *msg)
 {
-    struct hors_subset subset;
+    int subset[K];
     int i, l;
 
-    int res = hors_randsubset(msg, &subset);
+    const uint8_t *seed = sig+(K*N)+(K*TAU*N);
+
+    getsubset(msg, seed, subset);
 
     uint8_t tmp[N];
     uint8_t buf[N*2];
-    uint8_t *p = sig+(HORS_k*N);
+    const uint8_t *paths = sig+(K*N);
 
-    for (i = 0; i < HORS_k; ++i)
+    for (i = 0; i < K; ++i)
     {
-        int index = subset.s[i];
+        int index = subset[i];
         haraka256256(tmp, sig+(i*N));
 
-        for (l = 0; l < HORS_tau; ++l)
+        for (l = 0; l < TAU; ++l)
         {
             if (index % 2 == 0) {
-                memcpy(buf, tmp, N);
-                //memcpy(buf+N, &p->p[l], N);
-                memcpy(buf+N, p + (HORS_k*N*l) + (i*N), N);
+                HCPY(buf, tmp);
+                HCPY(buf+N, paths + (K*N*l) + (i*N));
             } else {
-                //memcpy(buf, &p->p[l], N);
-                memcpy(buf, p + (HORS_k*N*l) + (i*N), N);
-                memcpy(buf+N, tmp, N);
+                HCPY(buf, paths + (K*N*l) + (i*N));
+                HCPY(buf+N, tmp);
             }
 
             haraka512256(tmp, buf);
@@ -144,17 +146,16 @@ int horst_verify(const uint8_t *pk, const uint8_t *sig, const uint8_t *msg)
 }
 
 
-int hors_randsubset(const uint8_t *msg, struct hors_subset *subset)
+void getsubset(const uint8_t *msg, const uint8_t *seed, int *subset)
 {
     uint8_t tmp[N];
-    int i;
-    haraka256256(tmp, msg);
-    for (i = 0; i < HORS_k; ++i)
+    uint8_t in[2*N];
+    HCPY(in, msg);
+    HCPY(in, seed);
+    haraka512256(tmp, in);
+    for (int i = 0; i < K; ++i)
     {
-        int index = (tmp[2*i] << 8) | tmp[2*i+1];
-        subset->s[i] = index % HORS_t;
+        int index = ((tmp[2*i] << 8) | tmp[2*i+1]) % T;
+        subset[i] = index;
     }
-
-    return 0;
 }
-
