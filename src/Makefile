@@ -1,7 +1,8 @@
 CFLAGS=-std=c99 -O3 -Wno-format -march=native -funroll-loops -fomit-frame-pointer
-	
-all:
-	$(CC) $(CFLAGS) helpers.c haraka.c -o haraka
 
+
+sign:   *.c *.h
+	$(CC) $(CFLAGS) hors.c haraka.c sign.c -o sign
+	
 clean:
 	rm haraka

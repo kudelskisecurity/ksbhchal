@@ -3,16 +3,12 @@
 #include "smmintrin.h"
 #include "helpers.h"
 #include <stdio.h>
+#include <stdint.h>
 
 #define ROUNDS (5)
 #define AES_PER_ROUND (2)
 
-// TODO
-void haraka512256(unsigned char *hash, const unsigned char *msg) {
-
-}
-
-void haraka512256(unsigned char *hash, const unsigned char *msg) {
+void haraka512256(uint8_t *hash, const uint8_t *msg) {
     // stuff we need
     int i, j;
     __m128i s[4], tmp, rc[40];
@@ -67,9 +63,6 @@ void haraka512256(unsigned char *hash, const unsigned char *msg) {
     s[2] = _mm_load_si128(&((__m128i*)msg)[2]);
     s[3] = _mm_load_si128(&((__m128i*)msg)[3]);
 
-    printf("= input state =\n");
-    printstate512(s);
-
     for (i = 0; i < ROUNDS; ++i) {
         // aes round(s)
         for (j = 0; j < AES_PER_ROUND; ++j) {
@@ -78,9 +71,6 @@ void haraka512256(unsigned char *hash, const unsigned char *msg) {
             s[2] = _mm_aesenc_si128(s[2], rc[4*AES_PER_ROUND*i + 4*j + 2]);
             s[3] = _mm_aesenc_si128(s[3], rc[4*AES_PER_ROUND*i + 4*j + 3]);
         }
-
-        printf("= round %d : after aes layer =\n", i);
-        printstate512(s);
 
         // mixing
         tmp  = _mm_unpacklo_epi32(s[0], s[1]);
@@ -91,13 +81,7 @@ void haraka512256(unsigned char *hash, const unsigned char *msg) {
         s[0] = _mm_unpackhi_epi32(s[0], s[2]);
         s[2] = _mm_unpackhi_epi32(s[1],  tmp);
         s[1] = _mm_unpacklo_epi32(s[1],  tmp);
-
-        printf("= round %d : after mix layer =\n", i);
-        printstate512(s);
     }
-
-    printf("= output from permutation =\n");
-    printstate512(s);
 
     // xor message to get DM effect
     s[0] = _mm_xor_si128(s[0], _mm_load_si128(&((__m128i*)msg)[0]));
@@ -105,17 +89,14 @@ void haraka512256(unsigned char *hash, const unsigned char *msg) {
     s[2] = _mm_xor_si128(s[2], _mm_load_si128(&((__m128i*)msg)[2]));
     s[3] = _mm_xor_si128(s[3], _mm_load_si128(&((__m128i*)msg)[3]));
 
-    printf("= after feed-forward =\n");
-    printstate512(s);
-
     // truncate and store result
-    _mm_maskmoveu_si128(s[0], MSB64, (hash-8));
-    _mm_maskmoveu_si128(s[1], MSB64, (hash+0));
+    _mm_maskmoveu_si128(s[0], MSB64, (char*)(hash-8));
+    _mm_maskmoveu_si128(s[1], MSB64, (char*)(hash+0));
     _mm_storel_epi64((__m128i*)(hash + 16), s[2]);
     _mm_storel_epi64((__m128i*)(hash + 24), s[3]);
 }
 
-void haraka256256(unsigned char *hash, const unsigned char *msg) {
+void haraka256256(uint8_t *hash, const uint8_t *msg) {
     // stuff we need
     int i, j;
     __m128i s[2], tmp, rc[20];
@@ -146,9 +127,6 @@ void haraka256256(unsigned char *hash, const unsigned char *msg) {
     s[0] = _mm_load_si128(&((__m128i*)msg)[0]);
     s[1] = _mm_load_si128(&((__m128i*)msg)[1]);
 
-    printf("= input state =\n");
-    printstate256(s);
-
     for (i = 0; i < ROUNDS; ++i) {
         // aes round(s)
         for (j = 0; j < AES_PER_ROUND; ++j) {
@@ -156,37 +134,26 @@ void haraka256256(unsigned char *hash, const unsigned char *msg) {
             s[1] = _mm_aesenc_si128(s[1], rc[2*AES_PER_ROUND*i + 2*j + 1]);
         }
 
-        printf("= round %d : after aes layer =\n", i);
-        printstate256(s);
-
         // mixing
         tmp = _mm_unpacklo_epi32(s[0], s[1]);
         s[1] = _mm_unpackhi_epi32(s[0], s[1]);
         s[0] = tmp;
-
-        printf("= round %d : after mix layer =\n", i);
-        printstate256(s);
     }
-
-    printf("= output from permutation =\n");
-    printstate256(s);
 
     // xor message to get DM effect
     s[0] = _mm_xor_si128(s[0], _mm_load_si128(&((__m128i*)msg)[0]));
     s[1] = _mm_xor_si128(s[1], _mm_load_si128(&((__m128i*)msg)[1]));
-
-    printf("= after feed-forward =\n");
-    printstate256(s);
 
     // store result
     _mm_storeu_si128((__m128i*)hash, s[0]);
     _mm_storeu_si128((__m128i*)(hash + 16), s[1]);
 }
 
+#if 0
 int main() {
     // allocate memory for input and digest
-    unsigned char *msg = (unsigned char *)calloc(64, sizeof(unsigned char));
-    unsigned char *digest = (unsigned char *)calloc(32, sizeof(unsigned char));
+    uint8_t *msg = (uint8_t *)calloc(64, sizeof(uint8_t));
+    uint8_t *digest = (uint8_t *)calloc(32, sizeof(uint8_t));
     int i;
 
     // set some input bytes
@@ -213,3 +180,4 @@ int main() {
 
     return 0;
 }
+#endif
