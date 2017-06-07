@@ -5,13 +5,20 @@
 extern void haraka256256(uint8_t *hash, const uint8_t *msg);
 extern void haraka512256(uint8_t *hash, const uint8_t *msg);
 
-void gensk(uint8_t *sk, const uint8_t *seed)
+void printbytes(const uint8_t *m, int len) {
+	int i;
+	for (i = 0; i < len-1; ++i)
+		printf("%02x ", m[i]);
+	printf("%02x\n", m[len-1]);
+}
+
+void gensk(const uint8_t *seed, uint8_t *sk)
 {
     uint8_t in[2*N];
     HCPY(in, seed);
 
     for (int i=0; i < T; ++i) {
-        haraka256256(sk, in);
+        haraka256256(sk + (i*N), in);
         in[0] += 1;
         if (!in[0]) in[1] += 1;
     }
@@ -56,17 +63,18 @@ int sign(const uint8_t *sk, uint8_t *sig, const uint8_t *msg)
     uint8_t seedseed[2*N];
     uint8_t seed[N];
     HCPY(seedseed, sk);
-    HCPY(seedseed, msg);
+    HCPY(seedseed + N, msg);
     haraka512256(seed, seedseed);
 
     getsubset(msg, seed, subset);
 
-    HCPY(sig+(K*N)+(TAU*K*N), seed);
+    HCPY(SEED(sig), seed);
 
     for (int i = 0; i < K; ++i)
     {
         int index = subset[i];
         HCPY(sig+(i*N), sk + (index * N));
+        //printbytes(sk + (index*N), N);
     }
 
     uint8_t *buf = malloc(2*T * N);
@@ -82,7 +90,7 @@ int sign(const uint8_t *sk, uint8_t *sig, const uint8_t *msg)
     for (j = 0; j < n; ++j)
         haraka256256(dst+(j*N), sk+(j*N));
 
-    uint8_t *paths = sig+(K*N);
+    uint8_t *paths = PATHS(sig);
 
     for (l = 0; l < TAU; ++l)
     {
@@ -110,13 +118,13 @@ int verify(const uint8_t *pk, const uint8_t *sig, const uint8_t *msg)
     int subset[K];
     int i, l;
 
-    const uint8_t *seed = sig+(K*N)+(K*TAU*N);
+    const uint8_t *seed = SEED(sig);
 
     getsubset(msg, seed, subset);
 
     uint8_t tmp[N];
     uint8_t buf[N*2];
-    const uint8_t *paths = sig+(K*N);
+    const uint8_t *paths = PATHS(sig);
 
     for (i = 0; i < K; ++i)
     {
@@ -151,7 +159,7 @@ void getsubset(const uint8_t *msg, const uint8_t *seed, int *subset)
     uint8_t tmp[N];
     uint8_t in[2*N];
     HCPY(in, msg);
-    HCPY(in, seed);
+    HCPY(in+N, seed);
     haraka512256(tmp, in);
     for (int i = 0; i < K; ++i)
     {
