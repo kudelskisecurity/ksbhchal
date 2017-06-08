@@ -1,7 +1,6 @@
 #include "wmmintrin.h"
 #include "emmintrin.h"
 #include "smmintrin.h"
-#include "helpers.h"
 #include <stdio.h>
 #include <stdint.h>
 

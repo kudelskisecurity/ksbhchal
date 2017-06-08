@@ -10,6 +10,7 @@
 
 
 // TODO: attack = find seed for which sk's all known, after collecting some sk's
+// TODO: write sig to stdout
 
 int getkey(uint8_t *skseed) {
     int fd = open("./key", O_RDONLY);
@@ -31,34 +32,38 @@ int main(int ac, char **av) {
     memset(msg, 0x00, N);
 
     if (ac != 2) {
+        fprintf(stderr, "error: one argument needed\n");
         return 2;
     }
     if (strlen(av[1]) != 2*N) {
+        fprintf(stderr, "error: argument must be %d-chars long\n", 2*N);
         return 3;
     }
      
     char *h = av[1];
 
     for(int count = 0; count < N; count++) {
-    	sscanf(h, "%2hhx", &msg[count]);
+    	if (!sscanf(h, "%2hhx", &msg[count])) {
+            fprintf(stderr, "error: non-hex chars found\n");
+            return 4;
+        }
     	h += 2;
     }
-
-    printbytes(msg, N);
 
     gensk(skseed, sk);
     genpk(sk, pk);
 
     if (sign(sk, sig, msg)) {
-        printf("sign fail\n");
-        return 1;
+        fprintf(stderr, "error: sign fail\n");
+        return 5;
     }
 
     if (verify(pk, sig, msg)) {
-        printf("verify fail\n");
-        return 1;
+        fprintf(stderr, "error: verify fail\n");
+        return 6;
     }
-    else printf("verify ok\n");
+
+    printbytes(sig, SIGLEN);
 
     return 0;
 }

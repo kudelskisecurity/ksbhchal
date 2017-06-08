@@ -8,7 +8,7 @@ extern void haraka512256(uint8_t *hash, const uint8_t *msg);
 void printbytes(const uint8_t *m, int len) {
 	int i;
 	for (i = 0; i < len-1; ++i)
-		printf("%02x ", m[i]);
+		printf("%02x", m[i]);
 	printf("%02x\n", m[len-1]);
 }
 

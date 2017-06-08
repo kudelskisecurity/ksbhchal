@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python
 
 import SocketServer as ss
@@ -6,7 +5,7 @@ import struct
 import os
 from binascii import hexlify
 import hashlib
-import subprocess
+from subprocess import Popen, PIPE
 
 
 class Handler(ss.StreamRequestHandler):
@@ -14,19 +13,25 @@ class Handler(ss.StreamRequestHandler):
     def handle(self):
         put = self.wfile.write
 
-        put('Signature service, please send a message\n')
+        put('Signature service, please send a message in hex\n')
 
         msg = self.rfile.readline()[:-1]
 
-        put('Hashing the message')
-
         msghash = hashlib.sha256(msg).hexdigest()
 
-        put('Hash = %s\m' % msghash)
+        put('Signing the SHA-256 hash %s...\n' % msghash)
 
-        put('Signing it..."\n')
+        process = Popen(['./sign', msghash], stdout=PIPE, stderr=PIPE)
+        stdout, stderr = process.communicate()
 
-        sol = self.rfile.readline().strip()
+        if stderr != '':
+            put(stderr)
+        else:
+            put("Signature:\n")
+            put(stdout)
+
+        put("Thank your for using our service, goodbye!\n")
+
 
 
 class ReusableTCPServer(ss.ForkingMixIn, ss.TCPServer):
