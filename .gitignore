@@ -1,5 +1,6 @@
 sign
 verify
+hash
 
 # Prerequisites
 *.d
