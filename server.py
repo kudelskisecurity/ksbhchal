@@ -13,7 +13,7 @@ class Handler(ss.StreamRequestHandler):
     def handle(self):
         put = self.wfile.write
 
-        put('Signature service, please send a message in hex\n')
+        put('Signature service, please send a message\n')
 
         msg = self.rfile.readline()[:-1]
 
