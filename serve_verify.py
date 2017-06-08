@@ -12,26 +12,31 @@ class Handler(ss.StreamRequestHandler):
 
     def handle(self):
         put = self.wfile.write
+        sigbytes = 2592
 
-        put('Signature service, please send a message\n')
-
+        put('Signature verification service, please send a message first\n')
         msg = self.rfile.readline()[:-1]
-
         msghash = hashlib.sha256(msg).hexdigest()
 
-        put('Signing the SHA-256 hash %s...\n' % msghash)
+        put('Now please send a signature, in hex\n')
+        sig = self.rfile.readline()[:1]
 
-        process = Popen(['./sign', msghash], stdout=PIPE, stderr=PIPE)
+        if len(sig) != 2*sigbytes:
+            put('Sorry, the signature is not of the right length (should be %d bytes)' % sigbytes)
+            return
+
+        put('Verifying the signature of the SHA-256 hash %s...\n' % msghash)
+        process = Popen(['./verify', msghash, sig], stdout=PIPE, stderr=PIPE)
         stdout, stderr = process.communicate()
 
         if stderr != '':
             put(stderr)
+            return
         else:
             put("Signature:\n")
             put(stdout)
 
         put("Thank your for using our service, goodbye!\n")
-
 
 
 class ReusableTCPServer(ss.ForkingMixIn, ss.TCPServer):

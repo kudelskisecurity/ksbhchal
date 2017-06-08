@@ -30,5 +30,4 @@ Details (tentative):
 
 * Solution expected: code of a forgery algorithm (no just a forged message)
 
-* Code our own solver
-
+* Code our own solver: find seed for which sk's all known, after collecting some sk's and their respective auth paths

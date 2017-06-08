@@ -9,9 +9,6 @@
 #include <unistd.h>
 
 
-// TODO: attack = find seed for which sk's all known, after collecting some sk's
-// TODO: write sig to stdout
-
 int getkey(uint8_t *skseed) {
     int fd = open("./key", O_RDONLY);
     int r =read(fd, skseed, N);
