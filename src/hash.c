@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
+#include "common.h"
 
 extern void haraka512256(uint8_t *hash, const uint8_t *msg);
 
@@ -19,9 +20,7 @@ int main(int ac, char **av) {
 
     haraka512256(hash, msg);
 
-    for(int i=0; i<32; ++i) {
-        printf("%02x", hash[i]);
-    }
+    printbytes(hash, 32);
 
     return 0;
 }

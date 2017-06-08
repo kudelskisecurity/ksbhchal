@@ -1,4 +1,5 @@
 #include "hors.h"
+#include "common.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -8,16 +9,6 @@
 #include <sys/uio.h>
 #include <unistd.h>
 
-
-int getkey(uint8_t *skseed) {
-    int fd = open("./key", O_RDONLY);
-    if (fd < 0) return 1;
-    int r =read(fd, skseed, N);
-    close(fd);
-    if (r != N) return 1;
-    return 0;
-
-}
 
 int main(int ac, char **av) {
     uint8_t sk[N*T];

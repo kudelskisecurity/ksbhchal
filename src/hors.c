@@ -5,12 +5,6 @@
 extern void haraka256256(uint8_t *hash, const uint8_t *msg);
 extern void haraka512256(uint8_t *hash, const uint8_t *msg);
 
-void printbytes(const uint8_t *m, int len) {
-	int i;
-	for (i = 0; i < len-1; ++i)
-		printf("%02x", m[i]);
-	printf("%02x\n", m[len-1]);
-}
 
 void gensk(const uint8_t *seed, uint8_t *sk)
 {
@@ -23,7 +17,6 @@ void gensk(const uint8_t *seed, uint8_t *sk)
         if (!in[0]) in[1] += 1;
     }
 }
-
 
 int genpk(const uint8_t *sk, uint8_t *pk)
 {
