@@ -17,17 +17,13 @@ class Handler(ss.StreamRequestHandler):
         msg = self.rfile.readline()[:-1]
         msghash = hashlib.sha256(msg).hexdigest()
 
-        put('Signing the SHA-256 hash %s...\n' % msghash)
         process = Popen(['./sign', msghash], stdout=PIPE, stderr=PIPE)
         stdout, stderr = process.communicate()
 
         if stderr != '':
             put(stderr)
         else:
-            put("Signature:\n")
             put(stdout)
-
-        put("Thank your for using our service, goodbye!\n")
 
 
 class ReusableTCPServer(ss.ForkingMixIn, ss.TCPServer):
