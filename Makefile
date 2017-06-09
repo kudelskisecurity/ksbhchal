@@ -1,4 +1,4 @@
-CFLAGS=-std=c99 -Wno-format -march=native -funroll-loops -fomit-frame-pointer -O3 -fsanitize=address
+CFLAGS=-std=c99 -O3 -Wno-format -march=native -fomit-frame-pointer
 
 all:	sign verify hash
 

@@ -21,10 +21,6 @@ class Handler(ss.StreamRequestHandler):
         put('Now please send a signature, in hex\n')
         sig = self.rfile.readline()[:-1]
 
-        if len(sig) != 2*sigbytes:
-            put('Sorry, the signature is not of the right length (%d instead of %d bytes)' % (len(sig)/2, sigbytes))
-            return
-
         process = Popen(['./verify', msghash, sig], stdout=PIPE, stderr=PIPE)
         stdout, stderr = process.communicate()
 

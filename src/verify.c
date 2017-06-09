@@ -31,7 +31,7 @@ int main(int ac, char **av) {
         return 1;
     }
     if (strlen(av[2]) != 2*SIGLEN) {
-        fprintf(stderr, "error: second argument must be %d-chars long\n", 2*SIGLEN);
+        fprintf(stderr, "error: second argument has invalid length\n");
         return 1;
     }
      
