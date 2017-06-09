@@ -12,4 +12,4 @@ hash: 	src/haraka.c src/hash.c
 		$(CC) $(CFLAGS) $^ -o $@
 
 clean:
-	rm -f sign verify hash
+	rm -f sign verify hash *.dSYM
