@@ -9,11 +9,14 @@ sign:   src/haraka.c src/hors.c src/sign.c
 sign_debug:     src/haraka.c src/hors.c src/sign.c
 		$(CC) $(CFLAGS_DEBUG) $^ -o $@
 	
-verify: src/haraka.c src/hors.c src/verify.c
+verify:         src/haraka.c src/hors.c src/verify.c
 		$(CC) $(CFLAGS) $^ -o $@
+
+verify_debug:   src/haraka.c src/hors.c src/verify.c
+		$(CC) $(CFLAGS_DEBUG) $^ -o $@
 
 hash: 	src/haraka.c src/hash.c
 		$(CC) $(CFLAGS) $^ -o $@
 
 clean:
-	rm -f sign verify hash *.dSYM
+	rm -rf sign sign_debug verify verify_debug hash *.dSYM
