@@ -1,5 +1,6 @@
 import socket
 import time
+import binascii
 
 s = socket.socket()
 #s.connect(('localhost', 1111))
@@ -11,3 +12,4 @@ sig = s.recv(10000)[:-1]
 print(sig)
 if len(sig) != 2*2592:
     print('invalid length: %d' % len(sig))
+sigraw = binascii.unhexlify(sig)

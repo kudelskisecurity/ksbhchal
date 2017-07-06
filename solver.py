@@ -7,6 +7,7 @@ import socket
 import random
 import binascii
 import hashlib
+import time
 from subprocess import Popen, PIPE
 
 K=8
@@ -25,11 +26,15 @@ def getasig():
     msg = str(random.randint(0,2**32))
     # get its sig
     s = socket.socket()
-    s.connect(('localhost', 1111))
+    #s.connect(('localhost', 1111))
+    s.connect(('213.244.194.155', 1111))
     s.recv(100)
     s.send(msg+'\n')
+    time.sleep(0.1)
     sighex = s.recv(10000)[:-1]
     sig = binascii.unhexlify(sighex)
+    if len(sig) != 2592:
+        print('invalid len: %d' % len(sig))
     return msg, sig
 
 def sig2seed(sig):
